@@ -1,5 +1,6 @@
 package org.example.bootrest.service;
 
+import org.apache.coyote.BadRequestException;
 import org.example.bootrest.model.domain.Animal;
 import org.example.bootrest.model.mapper.AnimalMapper;
 import org.springframework.stereotype.Service;
@@ -20,7 +21,13 @@ public class AnimalServiceImpl implements AnimalService {
     }
 
     @Override
-    public void create(Animal animal) {
+    public void create(Animal animal) throws BadRequestException {
+        if (animal.name().isEmpty()) {
+            throw new BadRequestException("이름을 비울 수 없습니다");
+        }
+        if (animal.description().isEmpty()) {
+            throw new BadRequestException("설명을 비울 수 없습니다");
+        }
         animalMapper.insert(animal);
     }
 }
