@@ -36,7 +36,7 @@ public class AnimalController {
     // POST http://localhost:8080/api/animals
     @PostMapping
     public ResponseEntity<Void> create(
-            @RequestBody AnimalRequestDTO dto) throws BadRequestException {
+            @RequestBody AnimalRequestDTO dto) throws Exception {
         String story = geminiService.makeStory(dto); // AI가 붙을 거임
         animalService.create(dto.toAnimal(story));
         return new ResponseEntity<>(HttpStatus.CREATED); // 201
