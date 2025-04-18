@@ -53,7 +53,14 @@
 
     </section>
     <script>
-
+        const animalForm = document.querySelector('#animal-form');
+        animalForm.addEventListener('submit', (event) => {
+            event.preventDefault(); // 이래야 form 기본 제출을 막을 수 있음.
+            // formValues
+            const animalName = document.querySelector('#animal-name').value;
+            const animalDesc = document.querySelector('#animal-desc').value;
+            console.log(animalName, animalDesc);
+        });
     </script>
 </body>
 </html>
