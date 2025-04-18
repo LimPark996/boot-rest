@@ -7,5 +7,5 @@ import java.util.List;
 public interface AnimalService {
     List<Animal> findAll();
 
-    Animal save(Animal animal);
+    void create(Animal animal);
 }

@@ -20,7 +20,7 @@ public class AnimalServiceImpl implements AnimalService {
     }
 
     @Override
-    public Animal save(Animal animal) {
-        return null;
+    public void create(Animal animal) {
+        animalMapper.insert(animal);
     }
 }
