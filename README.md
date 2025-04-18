@@ -8,7 +8,7 @@ sequenceDiagram
     note over 🌐JS: fetch('/api/animals', { method: 'POST', body: JSON })로 서버에 전송
     🌐JS->>🎯Controller: POST /api/animals\n{ name, description }
 
-    note over 🎯Controller: @RestController인 AnimalController가 요청 받음\n→ @RequestBody로 JSON → AnimalRequestDTO 변환
+    note over 🎯Controller: @RestController인 AnimalController가 요청 받음 → @RequestBody로 JSON → AnimalRequestDTO 변환
     🎯Controller->>🎯Controller: new AnimalRequestDTO(name, description)
 
     note over 🎯Controller: DTO의 toAnimal() 메서드로 Entity 생성
@@ -31,6 +31,7 @@ sequenceDiagram
 ### 각 파일 역할 정리
 
 계층 | 파일 | 역할 요약
+---- | ---- | --------
 🌍 HTML/JS | index.html | 사용자 입력 → fetch('/api/animals', { method: 'POST' })로 JSON 전송
 🎯 Controller | AnimalController | REST API 진입 지점. @PostMapping으로 요청 받음 → DTO → Entity 변환 후 Service에 전달
 🧠 DTO | AnimalRequestDTO | 클라이언트가 보낸 JSON 데이터를 객체로 받기 위한 형식. toAnimal()로 Entity 변환 지원
