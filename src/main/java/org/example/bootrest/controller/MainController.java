@@ -7,6 +7,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class MainController {
     @GetMapping
     public String index() {
-        return "index";
+        return "index"; // 응답을 할 주소, 템플릿...
     }
 }
