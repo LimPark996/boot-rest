@@ -12,3 +12,6 @@ logging:
     org.example.bootrest.model.mapper: DEBUG # mapper 패키지의 로깅 레벨을 DEBUG로 설정 (DEV)
     # org.example.bootrest.model.mapper: ERROR # mapper 패키지의 로깅 레벨을 ERROR로 설정
     # 너무 쓸데없는 많은 로그 방지
+# 제미나이
+gemini:
+  api-key: ${GEMINI_API_KEY}

@@ -71,7 +71,23 @@
                 })
             });
             console.log(response.status);
+            if (response.status === 400) {
+                alert("잘못된 입력!");
+            }
         });
+
+        // 데이터 로딩
+        document.addEventListener('DOMContentLoaded', async () => {
+            const animalList = document.querySelector('#animal-list');
+            const response = await fetch('/api/animals', {
+                // method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+            animalList.innerHTML = JSON.stringify(await response.json());
+        })
+
     </script>
 </body>
 </html>
