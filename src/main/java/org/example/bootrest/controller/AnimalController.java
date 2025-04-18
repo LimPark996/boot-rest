@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController // Spring -> 이거 아니라고... 주소 아니고
-@RequestMapping("/api/animal") // 이겁니다...
+@RequestMapping("/api/animals") // 이겁니다...
 public class AnimalController {
     private final AnimalService animalService;
 

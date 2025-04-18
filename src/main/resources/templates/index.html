@@ -54,12 +54,23 @@
     </section>
     <script>
         const animalForm = document.querySelector('#animal-form');
-        animalForm.addEventListener('submit', (event) => {
+        animalForm.addEventListener('submit', async (event) => {
             event.preventDefault(); // 이래야 form 기본 제출을 막을 수 있음.
             // formValues
-            const animalName = document.querySelector('#animal-name').value;
-            const animalDesc = document.querySelector('#animal-desc').value;
-            console.log(animalName, animalDesc);
+            const name = document.querySelector('#animal-name').value;
+            const description = document.querySelector('#animal-desc').value;
+            console.log("animalName", name);
+            console.log("animalDesc", description);
+            const response = await fetch('/api/animals', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'body': JSON.stringify({
+                        name, description,
+                    })
+                }
+            });
+            console.log(await response.json());
         });
     </script>
 </body>
