@@ -65,12 +65,12 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'body': JSON.stringify({
-                        name, description,
-                    })
-                }
+                },
+                body: JSON.stringify({
+                    name, description,
+                })
             });
-            console.log(await response.json());
+            console.log(response.status);
         });
     </script>
 </body>
