@@ -1,10 +1,9 @@
 package org.example.bootrest.controller;
 
 import org.example.bootrest.model.domain.Animal;
+import org.example.bootrest.model.dto.AnimalRequestDTO;
 import org.example.bootrest.service.AnimalService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -24,5 +23,13 @@ public class AnimalController {
     @GetMapping
     public List<Animal> all() {
         return animalService.findAll();
+    }
+
+    @PostMapping
+    public Animal create(
+            @RequestBody AnimalRequestDTO dto) {
+//        Animal animal = new Animal("", dto.name(), dto.description(), );
+//        return animalService.save(animal);
+        return null;
     }
 }

@@ -18,4 +18,9 @@ public class AnimalServiceImpl implements AnimalService {
     public List<Animal> findAll() {
         return animalMapper.findAll();
     }
+
+    @Override
+    public Animal save(Animal animal) {
+        return null;
+    }
 }
