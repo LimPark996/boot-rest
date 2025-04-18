@@ -88,7 +88,31 @@ contents: [{ parts: [{ text: \"...\" }] }]
 - Gemini API를 호출해 사용자가 작성한 이름/설명을 기반으로 이야기를 생성하는 기능 담당
 - Prompt를 만들어 Google API에 요청을 보낸 뒤, story만 추출해서 반환함
 - 내부에서 Java 11의 HttpClient와 ObjectMapper를 활용함
-  
+
+---
+### GeminiServiceImpl 기반 전체 흐름 다이어그램
+
+```mermaid
+sequenceDiagram
+    note over 🎯AnimalController: POST 요청 처리 중 <br>사용자 입력을 DTO로 받음
+
+    🎯AnimalController->>🧠GeminiServiceImpl: makeStory(AnimalRequestDTO dto) 호출
+    note over 🧠GeminiServiceImpl: dto.name() + dto.description() 기반으로 prompt 작성
+
+    🧠GeminiServiceImpl->>🗃️GeminiRequestDTO: GeminiRequestDTO 구성, 프롬프트를 Gemini API가 이해할 수 있는 JSON 포맷으로 감싸주는 역할
+    note over 🗃️GeminiRequestDTO: 내부 구조 → contents:[{parts:[{text: prompt}]}]
+
+    🧠GeminiServiceImpl->>🌐Gemini API: HttpClient로 Gemini API에 POST 요청 (JSON body)
+    note over 🌐Gemini API: Gemini API가 응답 반환 (복잡한 nested JSON)
+
+    🌐Gemini API-->>🧠GeminiServiceImpl: 응답 JSON 수신
+    🧠GeminiServiceImpl->>📥GeminiResponseDTO: ObjectMapper로 GeminiResponseDTO로 역직렬화
+    note over 📥GeminiResponseDTO: candidates → content → parts → text 구조
+
+    📥GeminiResponseDTO-->>🧠GeminiServiceImpl: text 반환 (story 추출)
+    🧠GeminiServiceImpl-->>🎯AnimalController: 생성된 story 문자열 반환
+```
+
 ---
 
 ### index.html (중에서 비동기 이벤트 기반 구조 분석)
