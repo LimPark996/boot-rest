@@ -2,44 +2,93 @@
 
 ```mermaid
 sequenceDiagram
-    note over 👤사용자: form에 name, desc 입력하고 제출
+    note over 👤사용자: form에 name과 description을 입력하고 "생성" 버튼 클릭
 
-    👤사용자->>🌐JS: 사용자가 form 작성 후 submit
-    note over 🌐JS: fetch('/api/animals', { method: 'POST', body: JSON })로 서버에 전송
-    🌐JS->>🎯Controller: POST /api/animals\n{ name, description }
+    👤사용자->>🌐JS: 브라우저의 JS가 submit 이벤트 감지
+    note over 🌐JS: fetch로 /api/animals에 POST 요청 전송
+    🌐JS->>🎯AnimalController: HTTP POST /api/animals (JSON 본문 포함)
 
-    note over 🎯Controller: @RestController인 AnimalController가 요청 받음 → @RequestBody로 JSON → AnimalRequestDTO 변환
-    🎯Controller->>🎯Controller: new AnimalRequestDTO(name, description)
+    note over 🎯AnimalController: Controller에서 요청 수신 후 JSON을 DTO로 변환
+    🎯AnimalController->>🧠GeminiService: GeminiService에 DTO 전달 → 이야기 생성 요청
+    🧠GeminiService->>🧠GeminiService: Gemini API 호출 → 응답 파싱 → 간단한 이야기(story) 추출
+    🧠GeminiService-->>🎯AnimalController: 생성된 이야기 문자열 반환
 
-    note over 🎯Controller: DTO의 toAnimal() 메서드로 Entity 생성
-    🎯Controller->>⚙️Service: animalService.save() 호출
-
-    note over ⚙️Service: AnimalServiceImpl에서 animalMapper.insert(animal) 실행
-    ⚙️Service->>📦Mapper: animalMapper.insert(entity)
-
-    note over 📦Mapper: MyBatis의 @Insert 문으로 실제 SQL 실행
-    📦Mapper->>🗄️DB: INSERT INTO animal (...)
-
-    note over 🗄️DB: animal 테이블에 데이터 저장 완료!
-
-    📦Mapper-->>⚙️Service: void (현재 insert는 return 없음)
-    ⚙️Service-->>🎯Controller: 저장한 entity 반환 (현재 null)
-    🎯Controller-->>🌐JS: JSON 응답
-    🌐JS-->>👤사용자: 응답 확인 & 콘솔 출력 or UI 갱신
+    🎯AnimalController->>⚙️AnimalService: AnimalService에 dto + story를 기반으로 Animal 객체 전달
+    note over ⚙️AnimalService: 유효성 검사 수행 (빈 값 체크 등)
+    ⚙️AnimalService->>📦AnimalMapper: 유효한 경우 AnimalMapper에 insert 요청
+    📦AnimalMapper->>🗄️DB: INSERT SQL 실행 → 동물 데이터 저장
+    🗄️DB-->>📦AnimalMapper: 저장 완료
+    📦AnimalMapper-->>⚙️AnimalService: 저장 완료 알림
+    ⚙️AnimalService-->>🎯AnimalController: 처리 완료
+    🎯AnimalController-->>🌐JS: HTTP 201 Created 응답 반환
+    🌐JS-->>👤사용자: 브라우저에서 응답 상태 확인 및 후처리 (예: 목록 새로고침)
 ```
 
 ### 각 파일 역할 정리
 
-계층 | 파일 | 역할 요약
----- | ---- | --------
-🌍 HTML/JS | index.html | 사용자 입력 → fetch('/api/animals', { method: 'POST' })로 JSON 전송
-🎯 Controller | AnimalController | REST API 진입 지점. @PostMapping으로 요청 받음 → DTO → Entity 변환 후 Service에 전달
-🧠 DTO | AnimalRequestDTO | 클라이언트가 보낸 JSON 데이터를 객체로 받기 위한 형식. toAnimal()로 Entity 변환 지원
-⚙️ Service | AnimalService, AnimalServiceImpl | 비즈니스 로직 담당. 현재는 insert만 있고, AI story는 아직 빈값
-🧩 Mapper (MyBatis) | AnimalMapper | DB 접근 담당. SQL 직접 작성. @Insert로 animal 테이블에 저장
-🗃️ 도메인 객체 | Animal | DB 테이블과 거의 1:1로 매핑되는 불변 객체 (record 사용)
+**📁 index.html**
 
+- 사용자와 상호작용하는 프론트엔드 UI
+- 사용자가 이름과 설명을 입력할 수 있는 form을 제공함
+- JavaScript 코드로 submit 이벤트를 감지하고, 서버에 JSON 데이터를 fetch API로 전송함
+- 페이지가 로드될 때 기존 동물 리스트를 서버에서 가져와서 표시함
 
+**📁 controller/AnimalController.java**
+
+- 백엔드의 입구 역할을 하는 클래스 (REST API Controller)
+- POST 요청을 받아서 JSON을 DTO로 변환하고 서비스 계층에 전달
+- GeminiService를 호출해서 이야기를 생성하고, 이야기와 DTO를 합친 객체를 만들어 서비스 계층에 Animal 객체 전달
+- 서비스 ~ Mapper를 거쳐 DB 저장 후에는 상태 코드만 반환함
+- GET 요청도 처리하여 등록된 동물 전체 리스트를 반환함
+
+**📁 controller/MainController.java**
+
+- 루트 URL(/)로 접속했을 때 index.html을 반환하는 간단한 웹 페이지 진입 컨트롤러
+- REST가 아닌 일반 템플릿용 컨트롤러로 사용됨
+
+**📁 dto/AnimalRequestDTO.java**
+
+- 클라이언트가 보낸 JSON 데이터를 자바 객체로 매핑하기 위한 DTO 클래스
+- DTO는 Controller에서만 사용되고, 이후 내부에서 사용되는 Entity로 변환함
+- 이 DTO는 별도의 변환 메서드(toAnimal)를 가지고 있어서, 받은 입력값과 생성된 이야기를 기반으로 Animal 객체(Entity)를 생성함
+
+**📁 dto/GeminiRequestDTO.java, GeminiResponseDTO.java**
+
+- 이 두 DTO 클래스는 Google Gemini API와의 통신을 위해 만들어졌으며, 요청과 응답의 복잡한 JSON 구조를 **자바**로 표현하기 위해 설계되었습니다.
+- GeminiRequestDTO는 GeminiAPI에 보낼 prompt 데이터를 감싼 구조로,
+
+contents: [{ parts: [{ text: \"...\" }] }]
+
+- 이 구조를 맞추기 위해 내부에 Content, Part라는 중첩된 record 클래스를 사용합니다.
+
+- 사용자의 입력값 (name, description)을 기반으로 만들어진 하나의 문장을 text로 구성하여 전달합니다.
+- GeminiResponseDTO는 응답을 파싱하기 위한 구조로, 응답 형태인 candidates → content → parts → text 구조를 그대로 반영하여 중첩된 record로 구성합니다.
+- Jackson 라이브러리로 역직렬화를 수행할 때, 예상하지 못한 필드로 인해 오류가 발생하지 않도록 @JsonIgnoreProperties(ignoreUnknown = true)를 통해 방어적으로 설계되어 있습니다.
+- 이 DTO들은 단순한 데이터 전달이 아니라, 외부 API와 정확히 계약을 맞춰주는 인터페이스 역할을 하며, 내부적으로는 Service 단에서 .candidates().get(0).content().parts().get(0).text() 같은 방식으로 story 텍스트를 쉽게 추출할 수 있게 돕습니다.
+
+**📁 domain/Animal.java**
+
+- 실제 DB 테이블과 1:1로 매핑되는 Entity 클래스
+- DB의 uuid, name, description, story, createdAt과 필드 구조가 동일함
+
+**📁 mapper/AnimalMapper.java**  
+
+- MyBatis Mapper 인터페이스
+- @Insert, @Select 등의 어노테이션 기반으로 SQL을 직접 기술함
+- findAll() 메서드는 전체 리스트를 조회하며, insert()는 새로운 동물 데이터를 DB에 삽입함
+
+**📁 service/AnimalService.java (interface) & AnimalServiceImpl.java**
+
+- Animal 데이터를 저장하거나 조회하는 비즈니스 로직 담당 계층
+- 입력값이 비어 있는지 등 유효성 검사를 수행하고, 유효할 경우 Mapper로 위임함
+- GET 요청 시에는 Mapper를 통해 DB에서 모든 Animal을 조회해서 반환함
+
+**📁 service/GeminiService.java & GeminiServiceImpl.java**
+
+- Gemini API를 호출해 사용자가 작성한 이름/설명을 기반으로 이야기를 생성하는 기능 담당
+- Prompt를 만들어 Google API에 요청을 보낸 뒤, story만 추출해서 반환함
+- 내부에서 Java 11의 HttpClient와 ObjectMapper를 활용함
+  
 ---
 
 ### index.html (중에서 비동기 이벤트 기반 구조 분석)
@@ -53,7 +102,7 @@ sequenceDiagram
 - 그 안에서 await fetch(...)가 서버랑 통신하는 코드예요.
 
 
-#### 용어 정리
+### 용어 정리
 
 개념 | 의미
 ---  | ---
@@ -67,7 +116,7 @@ fetch | JS에서 HTTP 요청을 보내는 기본 함수 (GET, POST 등 가능)
 response | fetch로 요청한 결과값 (응답 본문, 상태코드 등)
 JSON.stringify() | JS 객체 → JSON 문자열로 바꾸는 함수
 
-#### index.html 일부 코드를 조각별로 설명
+### index.html 일부 코드를 조각별로 설명
 
 ```js
 animalForm.addEventListener('submit', async (event) => {
@@ -130,7 +179,7 @@ document.querySelector('#animal-list').innerHTML = JSON.stringify(json);
 - 그 안에 내용을 json 데이터로 채워넣기
 - JSON.stringify(json) → JS 객체를 문자열로 바꿔서 보기 좋게 출력
 
-#### 시각적으로 정리
+### 시각적으로 정리
 
 ```plaintext
 [HTML 다 로드됨]
